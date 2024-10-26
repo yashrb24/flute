@@ -72,11 +72,11 @@ def rolling_windows(
     List[pd.DataFrame]
         List of DataFrame windows that meet the filtering criteria.
     """
-    
+
     df["x"] = (df["x"] - df["x"].mean()) / df["x"].std()
     df["y"] = (df["y"] - df["y"].mean()) / df["y"].std()
     df["z"] = (df["z"] - df["z"].mean()) / df["z"].std()
-    
+
     windows = []
     counter = 0
     for start in range(0, len(df) - window_size + 1, slide_distance):
@@ -110,39 +110,35 @@ def rolling_windows_without_noise(df: pd.DataFrame) -> List[pd.DataFrame]:
         List of DataFrame windows excluding the 'noise' label.
     """
 
+    df["x"] = (df["x"] - df["x"].mean()) / df["x"].std()
+    df["y"] = (df["y"] - df["y"].mean()) / df["y"].std()
+    df["z"] = (df["z"] - df["z"].mean()) / df["z"].std()
+
     start_indices = []
     end_indices = []
-    
+
     flag = False
     for i in range(len(df)):
-        if df.iloc[i]["label"] == "noise":
-            if flag:
+        if flag:
+            if df["label"][i] == "noise":
                 end_indices.append(i)
                 flag = False
+            else:
+                continue
         else:
-            if not flag:
+            if df["label"][i] != "noise":
                 start_indices.append(i)
                 flag = True
-                
-    if flag:
-        end_indices.append(len(df))
-    
-    df_without_noise = pd.concat([df.iloc[start:end] for start, end in zip(start_indices, end_indices)])
-    
-    df_without_noise["x"] = (df_without_noise["x"] - df_without_noise["x"].mean()) / df_without_noise["x"].std()
-    df_without_noise["y"] = (df_without_noise["y"] - df_without_noise["y"].mean()) / df_without_noise["y"].std()
-    df_without_noise["z"] = (df_without_noise["z"] - df_without_noise["z"].mean()) / df_without_noise["z"].std()
+            else:
+                continue
     
     windows = []
-    counter = 0
-    
     for start, end in zip(start_indices, end_indices):
-        window = df_without_noise.iloc[counter: counter + end - start]
+        window = df.iloc[start : end]
         windows.append(window)
-        counter += end - start
         
     return windows
-    
+
 
 def fft_features(signal: pd.Series) -> Tuple[float, float]:
     """
@@ -239,21 +235,19 @@ def process_file(df: pd.DataFrame) -> Tuple[DataFrame, DataFrame]:
     """
     windows = rolling_windows_without_noise(df)
     processed_windows, labels = merge_windows(windows)
+    print(f"length of processed_windows: {len(processed_windows)}")
     return processed_windows, labels
 
 
 if __name__ == "__main__":
     # Example file path to the dataset
-    file_name = "/home/candy/Projects/flute/data/test_3_letter_m_labeled.csv"
+    file_name = "/home/candy/Projects/flute/data/test_1_letter_y_labeled.csv"
 
     # Parse the input file
     df = parse_file(file_name)
 
     # Process the data
     X, y = process_file(df)
-    
-    # Rolling windows without noise
-    # windows = rolling_windows_without_noise(df)
 
     print(X.head())
-    print(y.head())
+    # print(y.head())

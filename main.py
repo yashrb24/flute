@@ -49,6 +49,7 @@ def process_single_file(file: str, data_dir: str) -> tuple:
     :param data_dir: Directory where the files are stored.
     :return: Tuple containing the file name and processed data.
     """
+    print(file)
     file_path = os.path.join(data_dir, file)
     df = parse_file(file_path)
     return file, process_file(df)
@@ -128,10 +129,10 @@ def run_experiment(data_dir, leave_out_values):
     :return: Average classification report across all leave-out tests.
     """
     # Read all files from the data directory
-    files = os.listdir(data_dir)
+    files = sorted(os.listdir(data_dir))
 
     # Determine the number of CPU cores to use
-    num_cores = os.cpu_count()
+    num_cores = 1
 
     # Create a partial function with fixed data_dir
     process_func = partial(process_single_file, data_dir=data_dir)
