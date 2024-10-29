@@ -1,5 +1,5 @@
 from sklearn.ensemble import RandomForestClassifier
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.neighbors import KNeighborsClassifier
 from sklearn.preprocessing import LabelEncoder
 from sklearn.svm import SVC
@@ -20,12 +20,13 @@ def random_forest_classifier(X_train, y_train, X_test, y_test):
 
     # Get the report, handle zero-division
     report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
-    return report
+    cm = confusion_matrix(y_test, y_pred)
+    return report, cm
 
 
 def svm_classifier(X_train, y_train, X_test, y_test):
     # Create the model and train it
-    svm_model = SVC(kernel='rbf')
+    svm_model = SVC(kernel='linear')
     svm_model.fit(X_train, y_train)
 
     # Test the model
@@ -33,7 +34,8 @@ def svm_classifier(X_train, y_train, X_test, y_test):
 
     # Get the report, handle zero-division
     report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
-    return report
+    cm = confusion_matrix(y_test, y_pred)
+    return report, cm
 
 
 def knn_classifier(X_train, y_train, X_test, y_test):
@@ -46,7 +48,8 @@ def knn_classifier(X_train, y_train, X_test, y_test):
 
     # Get the report, handle zero-division
     report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
-    return report
+    cm = confusion_matrix(y_test, y_pred)
+    return report, cm
 
 
 def xgboost_classifier(X_train, y_train, X_test, y_test):
@@ -59,7 +62,8 @@ def xgboost_classifier(X_train, y_train, X_test, y_test):
 
     # Get the report, handle zero-division
     report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
-    return report
+    cm = confusion_matrix(y_test, y_pred)
+    return report, cm
 
 
 def mlp_classifier(X_train, y_train, X_test, y_test):
@@ -85,4 +89,5 @@ def mlp_classifier(X_train, y_train, X_test, y_test):
     
     # Get the report, handle zero-division
     report = classification_report(y_test, y_pred, output_dict=True, zero_division=0)
-    return report
+    cm = confusion_matrix(y_test, y_pred)
+    return report, cm

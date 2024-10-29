@@ -1,0 +1,5 @@
+__pycache__/*
+data/*
+recorded_data/*
+user_data_new/*
+.idea/*

@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 from pandas import DataFrame
 from scipy.fft import fft
-
+from string import ascii_uppercase
 
 def parse_file(file_path: str) -> pd.DataFrame:
     """
@@ -140,6 +140,33 @@ def rolling_windows_without_noise(df: pd.DataFrame) -> List[pd.DataFrame]:
     return windows
 
 
+def rolling_windows_without_noise_v2(df: pd.DataFrame) -> List[pd.DataFrame]:
+    """
+    Splits the DataFrame into rolling windows excluding the 'noise' label.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        Input DataFrame.
+
+    Returns:
+    --------
+    List[pd.DataFrame]
+        List of DataFrame windows excluding the 'noise' label.
+    """
+    
+    df["x"] = (df["x"] - df["x"].mean()) / df["x"].std()
+    df["y"] = (df["y"] - df["y"].mean()) / df["y"].std()
+    df["z"] = (df["z"] - df["z"].mean()) / df["z"].std()
+    
+    windows = []
+    for c in ascii_uppercase:
+        df_c = df[df["label"] == c]
+        windows.append(df_c)
+        assert len(df_c) > 0, f"Letter {c} -> the data is empty"
+    
+    return windows
+
 def fft_features(signal: pd.Series) -> Tuple[float, float]:
     """
     Computes FFT-based features: energy and entropy of the signal.
@@ -219,6 +246,49 @@ def merge_windows(windows: List[pd.DataFrame]) -> Tuple[DataFrame, DataFrame]:
     return pd.DataFrame(merged_windows), pd.DataFrame(merged_labels)
 
 
+def merge_windows_v2(windows: List[pd.DataFrame]) -> Tuple[DataFrame, DataFrame]:
+    """
+    Merges features from multiple windows and calculates statistical features for each window.
+
+    Parameters:
+    -----------
+    windows : List[pd.DataFrame]
+        List of DataFrame windows.
+
+    Returns:
+    --------
+    tuple[pd.DataFrame, pd.DataFrame]
+        A tuple containing a DataFrame of merged window features and a DataFrame of corresponding labels.
+    """
+    merged_windows = []
+    merged_labels = []
+
+    columns = ["x", "y", "z"]
+    for window in windows:
+        merged = {}
+
+        # Compute statistics and FFT features for each window column
+        for col in columns:
+            merged[f"{col}_mean"] = window[col].mean()
+            merged[f"{col}_std"] = window[col].std()
+            merged[f"{col}_median"] = window[col].median()
+            merged[f"{col}_min"] = window[col].min()
+            merged[f"{col}_max"] = window[col].max()
+            merged[f"{col}_energy"], merged[f"{col}_entropy"] = fft_features(
+                window[col]
+            )
+            merged[f"{col}_slope"] = compute_slope(window[col])
+
+        merged_label = window["label"].loc[window.index[0]]
+        merged_windows.append(merged)
+        merged_labels.append(merged_label)
+    
+    assert len(merged_windows) == len(merged_labels)
+    assert len(merged_windows) == len(windows) == 26
+    
+    return pd.DataFrame(merged_windows), pd.DataFrame(merged_labels)
+
+
 def process_file(df: pd.DataFrame) -> Tuple[DataFrame, DataFrame]:
     """
     Processes the input DataFrame by generating rolling windows and merging features.
@@ -239,15 +309,34 @@ def process_file(df: pd.DataFrame) -> Tuple[DataFrame, DataFrame]:
     return processed_windows, labels
 
 
+def process_file_v2(df: pd.DataFrame) -> Tuple[DataFrame, DataFrame]:
+    """
+    Processes the input DataFrame by generating rolling windows and merging features.
+
+    Parameters:
+    -----------
+    df : pd.DataFrame
+        Input DataFrame containing time-series data.
+
+    Returns:
+    --------
+    Tuple[pd.DataFrame, pd.DataFrame]
+        Processed feature DataFrame and corresponding labels.
+    """
+    windows = rolling_windows_without_noise_v2(df)
+    processed_windows, labels = merge_windows_v2(windows)
+    return processed_windows, labels
+
+
 if __name__ == "__main__":
     # Example file path to the dataset
-    file_name = "/home/candy/Projects/flute/data/test_1_letter_y_labeled.csv"
+    file_name = "/home/candy/Projects/flute/user_data_new/yash/yash_2.csv"
 
     # Parse the input file
     df = parse_file(file_name)
 
     # Process the data
-    X, y = process_file(df)
+    X, y = process_file_v2(df)
 
     print(X.head())
     # print(y.head())
