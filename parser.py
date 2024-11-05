@@ -1,3 +1,5 @@
+import math
+import os
 from typing import List, Tuple, Union
 
 import numpy as np
@@ -328,15 +330,66 @@ def process_file_v2(df: pd.DataFrame) -> Tuple[DataFrame, DataFrame]:
     return processed_windows, labels
 
 
+def process_file_v3(path: str) -> Tuple[DataFrame, DataFrame]:
+    """
+    Processes the input file by reading the timestamps and forming the closest windows to the timestamps.
+    
+    Parameters:
+    -----------
+    path : str
+        Path to the input file.
+        
+    Returns:
+    --------
+    Tuple[pd.DataFrame, pd.DataFrame]
+        Processed feature DataFrame and corresponding labels.
+    """
+    
+    all_original_files = os.listdir("data")
+    
+    # open the file in the folder "data" which starts with the name as base file name
+    file_path = None
+    base_file_name = path.split("/")[-1].split(".")[0]
+    for file_name in all_original_files:
+        if file_name.startswith(base_file_name):
+            file_path = f"data/{file_name}"
+            break
+    
+    df = pd.read_csv(file_path, names=["x", "y", "z", "label"], skiprows=1).dropna()
+    df["x"] = (df["x"] - df["x"].mean()) / df["x"].std()
+    df["y"] = (df["y"] - df["y"].mean()) / df["y"].std()
+    df["z"] = (df["z"] - df["z"].mean()) / df["z"].std()
+    
+    windows = []
+    
+    with open(path, "r") as file:
+        for line in file.readlines():
+            start_time, end_time, label = line.strip().split(",")
+            
+            # round up start time and round down end time
+            start_time = math.ceil(float(start_time))
+            end_time = math.floor(float(end_time))
+                
+            # get the data between start time and end time using iloc, only columns x, y, z
+            window = df.iloc[start_time:end_time][["x", "y", "z"]]
+            window["label"] = label
+            
+            windows.append(window)
+            
+    processed_windows, labels = merge_windows(windows)
+    return processed_windows, labels
+    
 if __name__ == "__main__":
     # Example file path to the dataset
-    file_name = "/home/candy/Projects/flute/user_data_new/yash/yash_2.csv"
+    file_name = "/home/candy/Projects/flute/user_data_new/ayush_old/test_2_letter_a.csv"
 
     # Parse the input file
-    df = parse_file(file_name)
+    # df = parse_file(file_name)
 
     # Process the data
-    X, y = process_file_v2(df)
-
-    print(X.head())
+    # X, y = process_file_v2(df)
+    X, y = process_file_v3(file_name)
+    
+    # print(X.shape)
+    print(X)
     # print(y.head())

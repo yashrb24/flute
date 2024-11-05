@@ -3,7 +3,7 @@ from sklearn.model_selection import train_test_split
 from imblearn.over_sampling import SMOTE
 from tqdm import tqdm
 import os
-from parser import parse_file, process_file, process_file_v2
+from parser import parse_file, process_file, process_file_v2, process_file_v3
 from multiprocessing import Pool
 from functools import partial
 from models import (
@@ -210,13 +210,25 @@ def centralized_mixed_training(data_dir, users):
     X_all, y_all = [], []
     for user_dir in users_dir:
         files = os.listdir(user_dir)
-        for file in files:
-            print(f"Processing file: {file}")
-            file_path = os.path.join(user_dir, file)
-            df = parse_file(file_path)
-            X, y = process_file_v2(df)
-            X_all.append(X)
-            y_all.append(y)
+        if not user_dir.endswith("ayush_old"):
+            for file in files:
+                print(f"Processing file: {file}")
+                file_path = os.path.join(user_dir, file)
+                df = parse_file(file_path)
+                X, y = process_file_v2(df)
+                X_all.append(X)
+                y_all.append(y)
+        else:
+            for file in files:
+                print(f"Processing file: {file}")
+                file_path = os.path.join(user_dir, file)
+                if file.startswith("test_1"):
+                    df = parse_file(file_path)
+                    X, y = process_file(df)
+                else:
+                    X, y = process_file_v3(file_path)
+                X_all.append(X)
+                y_all.append(y)
 
     X_all = pd.concat(X_all)
     y_all = pd.concat(y_all).map(lambda x: ord(x) - 65)
