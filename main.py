@@ -240,11 +240,13 @@ def centralized_mixed_training(data_dir, users):
     reports, cms = train_and_evaluate_models(X_train, y_train, X_test, y_test)
 
     for model, report in reports.items():
-        print("=" * 100)
-        print(f"Test Report for {model}:")
-        print(pd.DataFrame(report).transpose())
-        print(f"Confusion Matrix for {model}:")
-        print(pd.DataFrame(cms[model]))
+        with open(f"reports/{model}_report.txt", "w") as f:
+            f.write(f"Test Report for {model}:\n")
+            f.write(pd.DataFrame(report).transpose().to_string())
+            f.write("\n")
+            f.write(f"Confusion Matrix for {model}:\n")
+            f.write(pd.DataFrame(cms[model]).to_string())
+
 
 
 def loocv_user_experiment(data_dir, users):
