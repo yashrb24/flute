@@ -3,3 +3,5 @@ data/*
 recorded_data/*
 .idea/*
 reports/
+data/
+.venv/
